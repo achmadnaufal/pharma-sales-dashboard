@@ -1,8 +1,42 @@
+# Data files (keep sample_data/ tracked)
 data/*.csv
 data/*.xlsx
+
+# Python
 __pycache__/
 *.pyc
-.env
+*.pyo
+*.pyd
 *.egg-info/
 dist/
 build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# pytest / coverage
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Jupyter
+.ipynb_checkpoints/

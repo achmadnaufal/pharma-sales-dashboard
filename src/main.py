@@ -259,7 +259,7 @@ class PharmaSalesDashboard:
             if col in result.columns:
                 result = result.assign(**{col: pd.to_numeric(result[col], errors="coerce").fillna(0.0)})
 
-        str_cols = result.select_dtypes(include=["object", "str"]).columns
+        str_cols = result.select_dtypes(include=["object"]).columns
         for col in str_cols:
             result = result.assign(**{col: result[col].str.strip()})
 

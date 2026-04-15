@@ -1,0 +1,16 @@
+rep_id,region,product,month,units_sold,revenue,target,achievement_pct
+REP001,Northeast,Cardivex 10mg,January,142,71000.00,130,109.23
+REP001,Northeast,Neuroplex 25mg,January,98,58800.00,110,89.09
+REP002,Southeast,Cardivex 10mg,January,115,57500.00,120,95.83
+REP002,Southeast,Oncovast 50mg,January,63,126000.00,70,90.00
+REP003,Midwest,Neuroplex 25mg,February,134,80400.00,125,107.20
+REP003,Midwest,Diabetrex 500mg,February,210,42000.00,200,105.00
+REP004,Southwest,Cardivex 10mg,February,128,64000.00,130,98.46
+REP004,Southwest,Oncovast 50mg,February,58,116000.00,65,89.23
+REP005,West,Diabetrex 500mg,March,245,49000.00,220,111.36
+REP005,West,Neuroplex 25mg,March,112,67200.00,115,97.39
+REP001,Northeast,Cardivex 10mg,March,155,77500.00,130,119.23
+REP002,Southeast,Diabetrex 500mg,March,198,39600.00,190,104.21
+REP003,Midwest,Oncovast 50mg,March,71,142000.00,75,94.67
+REP004,Southwest,Neuroplex 25mg,March,125,75000.00,120,104.17
+REP005,West,Cardivex 10mg,March,138,69000.00,135,102.22
