@@ -1,207 +1,177 @@
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![Tests](https://img.shields.io/badge/tests-88%20passing-brightgreen)
 ![Last Commit](https://img.shields.io/github/last-commit/achmadnaufal/pharma-sales-dashboard)
 
 # Pharma Sales Dashboard
 
-Analytical engine for pharmaceutical field-team sales data -- loads CSV/Excel files, validates structure, computes KPIs (target achievement, territory rollups, market share), and returns tidy results ready for Streamlit or any downstream visualization.
+## Overview
 
-## Features
+Streamlit-powered business-intelligence dashboard for pharmaceutical field teams.  It ingests a sales CSV/Excel file produced by your CRM (call logs, prescriptions, revenue, targets) and surfaces the KPIs a pharma sales manager actually cares about:
 
-- **Data ingestion** from CSV and Excel (.xlsx / .xls)
-- **Automated validation** with configurable required-column checks
-- **Preprocessing pipeline** -- coerces types, fills missing numerics, strips whitespace (all immutable)
-- **KPI computation** -- target achievement %, revenue, market share
-- **Territory aggregation** with achievement scoring
-- **Time-series filtering** by year and/or month (case-insensitive)
-- **Tidy export** via `to_dataframe()` for downstream use
-- **Sample data generator** for quick demos and load testing
-- **49-test pytest suite** with edge-case coverage
+- **Target attainment** against both unit and dollar targets
+- **Rep leaderboards** with configurable ranking metric and top-N cut-off
+- **Year-over-year (YoY) growth** at territory, rep, and product level
+- **Cohort comparisons** between any two slices of the data (territories, products, therapeutic areas)
+- **Period filtering** by individual month, multi-month selection, or calendar range
+- **Call effectiveness** (revenue per call, HCP coverage)
 
-## Quick Start
+The analytical core is a set of pure, immutable Python functions in `src/main.py` and `src/metrics.py` - testable without a Streamlit runtime.  `src/streamlit_app.py` is a thin view layer on top of that core.
+
+## Installation
+
+Requires Python 3.9 or newer.
 
 ```bash
-# Clone the repo
 git clone https://github.com/achmadnaufal/pharma-sales-dashboard.git
 cd pharma-sales-dashboard
 
-# Create a virtual environment and install dependencies
 python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+source .venv/bin/activate           # Windows: .venv\Scripts\activate
 
-# Run the example script
-python examples/basic_usage.py
+pip install -r requirements.txt
 ```
 
-## Usage
+## Running the Dashboard
 
-### Run the example script
+Launch the Streamlit app against the bundled demo file:
+
+```bash
+streamlit run src/streamlit_app.py
+```
+
+Streamlit opens a browser at `http://localhost:8501`.  Use the sidebar to upload your own `.csv` / `.xlsx` file; if nothing is uploaded, `demo/sample_data.csv` is loaded automatically.
+
+For a non-UI smoke test:
 
 ```bash
 python examples/basic_usage.py
 ```
 
-**Output:**
+## Step-by-Step Usage
 
-```
-Sample data: 200 rows, 7 columns
-
-=== Analysis Results ===
-Total records: 200
-Totals:
-  territory: 19,108.25
-  product: 20,970.92
-  month: 20,963.12
-  actual_units: 20,346.21
-  target_units: 20,414.30
-Means:
-  territory: 95.541
-  product: 104.855
-  month: 104.816
-  actual_units: 101.731
-  target_units: 102.072
-```
-
-### Analyze the bundled sample data
+1. **Prepare your data** - a CSV/Excel file with the schema described in [Data Schema](#data-schema).  Column names can be in mixed case; the preprocessing pipeline normalizes them to snake_case.
+2. **Launch the app** with `streamlit run src/streamlit_app.py`.
+3. **Upload the file** via the sidebar *Upload sales CSV* picker, or leave blank to use the demo data.
+4. **Filter by month** in the sidebar multiselect - the selection cascades to every tab.
+5. **Navigate the tabs** (see [Sections / Tabs](#sections--tabs)).
+6. **Export or drill-down** - the underlying DataFrames render in interactive tables you can sort, resize, and download.
+7. **Automate** by importing `PharmaSalesDashboard` or the functions in `src.metrics` directly in a notebook or ETL job.
 
 ```python
 from src.main import PharmaSalesDashboard
+from src.metrics import rank_reps, yoy_growth_by_group
 
 dashboard = PharmaSalesDashboard()
-result = dashboard.run("demo/sample_data.csv")
+df = dashboard.preprocess(dashboard.load_data("demo/sample_data.csv"))
+
+top5 = rank_reps(df, metric="revenue_usd", top_n=5)
+yoy = yoy_growth_by_group(df, group_column="territory")
 ```
 
-**Output:**
+## Sections / Tabs
 
-```
-=== Pharma Sales Dashboard ===
-Total records: 20
-Columns: ['rep_id', 'rep_name', 'territory', 'product_name', 'therapeutic_area',
-          'month', 'year', 'units_sold', 'revenue_usd', 'target_units',
-          'calls_made', 'hcp_met', 'market_share_pct']
+The Streamlit app has four tabs, all driven by the same filtered DataFrame:
 
---- Totals ---
-  units_sold: 2,566.00
-  revenue_usd: 1,549,300.00
-  target_units: 2,510.00
-  calls_made: 1,056.00
-  hcp_met: 755.00
+| Tab                  | What it shows                                                                                   |
+|----------------------|-------------------------------------------------------------------------------------------------|
+| **Overview**         | Headline metrics (total revenue, total units, unit attainment) and a territory summary table.  |
+| **Rep Leaderboard**  | Reps ranked by revenue, units, or calls.  Top-N slider and metric switcher.                    |
+| **YoY Growth**       | Current-year vs prior-year revenue per territory / product / rep with growth %.                |
+| **Cohort Comparison**| Side-by-side totals, delta, and delta-% for any two cohort values (e.g., Northeast vs West).   |
 
---- Means ---
-  units_sold: 128.300
-  revenue_usd: 77,465.000
-  target_units: 125.500
-  calls_made: 52.800
-  hcp_met: 37.750
+## Data Schema
 
---- Territory Summary ---
-  Midwest:   524 units, $318,900 rev, 100.77% achievement
-  Northeast: 450 units, $317,300 rev, 104.65% achievement
-  Southeast: 494 units, $293,900 rev,  99.80% achievement
-  Southwest: 536 units, $300,000 rev, 102.10% achievement
-  West:      562 units, $319,200 rev, 104.07% achievement
+Core columns the app understands.  Any missing column is skipped gracefully - the dashboard degrades rather than crashing.
 
---- Target Achievement (per row) ---
-  Min: 89.09%  Max: 119.23%  Avg: 100.3%
-```
+| Column                | Type    | Required | Description                                             |
+|-----------------------|---------|----------|---------------------------------------------------------|
+| `rep_id`              | string  | required | Unique rep identifier                                   |
+| `rep_name`            | string  | optional | Display name for leaderboards                           |
+| `territory`           | string  | required | Territory the rep covers                                |
+| `region`              | string  | optional | Higher-level region grouping                            |
+| `product_name`        | string  | required | SKU or brand                                            |
+| `therapeutic_area`    | string  | optional | Therapy class (Cardiology, Oncology, ...)               |
+| `month`               | string  | required | Full month name (case-insensitive)                      |
+| `year`                | int     | required | Four-digit calendar year                                |
+| `units_sold`          | float   | required | Units sold in the period                                |
+| `revenue_usd`         | float   | required | Revenue booked in USD                                   |
+| `target_units`        | float   | required | Period unit target                                      |
+| `target_revenue_usd`  | float   | optional | Period revenue target - enables revenue attainment KPI  |
+| `calls_made`          | int     | optional | Sales calls completed                                   |
+| `calls_target`        | int     | optional | Sales-call target - enables call attainment KPI         |
+| `hcp_met`             | int     | optional | Unique HCPs met                                         |
+| `new_prescribers`     | int     | optional | First-time prescribers acquired in period               |
+| `market_share_pct`    | float   | optional | Product market share                                    |
 
-### Generate synthetic data
+A fully-populated 20-row example lives in [`demo/sample_data.csv`](demo/sample_data.csv).
 
-```bash
-python src/data_generator.py
-```
-
-```
-Generated 300 records -> data/sample.csv
-Shape: (300, 7)
-Columns: ['rep_id', 'territory', 'product', 'month', 'actual_units', 'target_units', 'revenue_usd']
-```
-
-### Run the test suite
+## Running the Test Suite
 
 ```bash
 pytest tests/ -v
 ```
 
-```
-tests/test_dashboard.py::TestComputeRevenue::test_basic_revenue_calculation PASSED
-tests/test_dashboard.py::TestComputeTargetAchievement::test_zero_target_returns_zero PASSED
-tests/test_dashboard.py::TestAggregateByTerritory::test_returns_one_row_per_territory PASSED
-tests/test_dashboard.py::TestFilterTimeSeries::test_filter_by_year PASSED
-tests/test_dashboard.py::TestEdgeCases::test_all_zero_targets_in_analysis PASSED
-tests/test_dashboard.py::TestDashboardAnalyze::test_analyze_returns_required_keys PASSED
-tests/test_dashboard.py::TestDashboardRunWithFile::test_run_with_sample_csv PASSED
-...
-49 passed in 0.25s
-```
+88 tests across two modules cover every pure function and its edge cases (empty DataFrame, zero / negative / NaN target, missing columns, ties, and more):
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Language | Python 3.9+ |
-| Data processing | pandas, NumPy |
-| Visualization | Streamlit, Plotly |
-| CLI formatting | Rich |
-| Testing | pytest |
-
-## Architecture
-
-```mermaid
-flowchart LR
-    A["CSV / Excel\nFile"] -->|load_data| B["Raw\nDataFrame"]
-    B -->|validate| C{"Validation\nCheck"}
-    C -->|fail| X["ValueError"]
-    C -->|pass| D["preprocess"]
-    D -->|clean & coerce| E["Clean\nDataFrame"]
-    E --> F["analyze"]
-    F --> G["KPI Dict"]
-    G --> H["to_dataframe"]
-    H --> I["Tidy\nDataFrame"]
-
-    F --> F1["aggregate_by_territory"]
-    F --> F2["compute_target_achievement"]
-    F --> F3["summary_stats / totals / means"]
-
-    I -->|render| J["Streamlit\nDashboard"]
-    I -->|export| K["CSV / Excel\nReport"]
-
-    style A fill:#e3f2fd
-    style J fill:#e8f5e9
-    style K fill:#e8f5e9
-    style X fill:#ffebee
-```
+- `tests/test_dashboard.py` - 49 tests for `src.main`
+- `tests/test_metrics.py`   - 39 tests for `src.metrics`
 
 ## Project Structure
 
 ```
 pharma-sales-dashboard/
-├── src/
-│   ├── __init__.py
-│   ├── main.py              # Core dashboard class and helper functions
-│   └── data_generator.py    # Synthetic data generator
-├── tests/
-│   ├── __init__.py
-│   └── test_dashboard.py    # 49-test pytest suite
-├── demo/
-│   └── sample_data.csv      # 20-row realistic sample dataset
-├── sample_data/
-│   └── sample_data.csv      # Compact 15-row sample for quick experiments
-├── examples/
-│   └── basic_usage.py       # Runnable usage example
-├── data/                    # Working data directory (gitignored)
-├── LICENSE
-├── requirements.txt
-├── .gitignore
-├── CHANGELOG.md
-└── README.md
+| src/
+|   | __init__.py
+|   | main.py              # Core dashboard class + validation / preprocess
+|   | metrics.py           # Attainment, YoY, ranking, cohort helpers
+|   | streamlit_app.py     # Streamlit UI (4 tabs)
+|   | data_generator.py    # Synthetic data generator
+| tests/
+|   | test_dashboard.py    # 49-test suite
+|   | test_metrics.py      # 39-test suite
+| demo/
+|   | sample_data.csv      # 20-row realistic sample (2024 + 2025)
+| examples/
+|   | basic_usage.py
+| data/                    # Working dir (gitignored)
+| LICENSE
+| requirements.txt
+| .gitignore
+| CHANGELOG.md
+| README.md
 ```
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A["CSV / Excel File"] -->|load_data| B["Raw DataFrame"]
+    B -->|validate| C{"Validation"}
+    C -->|pass| D["preprocess"]
+    C -->|fail| X["ValueError"]
+    D --> E["Clean DataFrame"]
+    E --> F["add_attainment_columns"]
+    F --> G1["rank_reps"]
+    F --> G2["yoy_growth_by_group"]
+    F --> G3["cohort_comparison"]
+    F --> G4["aggregate_by_territory"]
+    G1 & G2 & G3 & G4 --> H["Streamlit tabs"]
+```
+
+## Tech Stack
+
+| Layer           | Technology           |
+|-----------------|----------------------|
+| Language        | Python 3.9+          |
+| Data processing | pandas, NumPy        |
+| UI              | Streamlit, Plotly    |
+| Testing         | pytest               |
 
 ## License
 
-MIT License -- see [LICENSE](LICENSE) for details.
+MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-> Built by [Achmad Naufal](https://github.com/achmadnaufal) | Lead Data Analyst | Power BI · SQL · Python · GIS
+> Built by [Achmad Naufal](https://github.com/achmadnaufal) | Lead Data Analyst | Power BI, SQL, Python, GIS
