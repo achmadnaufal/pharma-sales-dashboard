@@ -1,0 +1,16 @@
+product_name,therapeutic_area,launch_period_label,territory,target_hcp_specialty,p,q,market_potential,horizon_months
+Cardivex 10mg,Cardiology,2024-Q1,Northeast,Cardiologist,0.010,0.40,12000,24
+Neuroplex 25mg,Neurology,2024-Q2,Midwest,Neurologist,0.008,0.35,8500,24
+Oncovast 50mg,Oncology,2024-Q3,West,Oncologist,0.020,0.55,4200,24
+Diabetrex 500mg,Endocrinology,2024-Q1,Southeast,Endocrinologist,0.005,0.45,18000,24
+Respivent 200mcg,Pulmonology,2024-Q4,Northeast,Pulmonologist,0.012,0.30,9500,24
+Immunoclear 40mg,Rheumatology,2025-Q1,Southwest,Rheumatologist,0.015,0.50,6200,24
+Hematix 100mg,Hematology,2024-Q2,West,Hematologist,0.007,0.38,3100,24
+Psychonex 20mg,Psychiatry,2024-Q3,Midwest,Psychiatrist,0.010,0.42,15000,24
+Gastrolene 30mg,Gastroenterology,2025-Q2,Southeast,Gastroenterologist,0.009,0.36,11000,24
+Dermafix 5%,Dermatology,2024-Q1,West,Dermatologist,0.018,0.48,7800,24
+Renalguard 10mg,Nephrology,2024-Q4,Northeast,Nephrologist,0.006,0.33,5400,24
+Pediavax 2mg,Pediatrics,2025-Q1,Midwest,Pediatrician,0.025,0.60,22000,24
+Geriacare 5mg,Geriatrics,2025-Q2,Southeast,Geriatrician,0.004,0.28,13500,24
+Ophthalex 0.5%,Ophthalmology,2024-Q3,Southwest,Ophthalmologist,0.011,0.40,4800,24
+Endovent 200mg,Endocrinology,2025-Q1,West,Endocrinologist,0.013,0.52,10500,24

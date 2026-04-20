@@ -1,6 +1,6 @@
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-88%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-131%20passing-brightgreen)
 ![Last Commit](https://img.shields.io/github/last-commit/achmadnaufal/pharma-sales-dashboard)
 
 # Pharma Sales Dashboard
@@ -15,8 +15,9 @@ Streamlit-powered business-intelligence dashboard for pharmaceutical field teams
 - **Cohort comparisons** between any two slices of the data (territories, products, therapeutic areas)
 - **Period filtering** by individual month, multi-month selection, or calendar range
 - **Call effectiveness** (revenue per call, HCP coverage)
+- **Bass diffusion forecasting** for new-product launch uptake curves (p / q / m parameterization, closed-form peak timing, grid-search fitter)
 
-The analytical core is a set of pure, immutable Python functions in `src/main.py` and `src/metrics.py` - testable without a Streamlit runtime.  `src/streamlit_app.py` is a thin view layer on top of that core.
+The analytical core is a set of pure, immutable Python functions in `src/main.py`, `src/metrics.py`, and `src/bass_diffusion.py` - testable without a Streamlit runtime.  `src/streamlit_app.py` is a thin view layer on top of that core.
 
 ## Installation
 
@@ -106,16 +107,51 @@ Core columns the app understands.  Any missing column is skipped gracefully - th
 
 A fully-populated 20-row example lives in [`demo/sample_data.csv`](demo/sample_data.csv).
 
+## Forecast a new-product launch with the Bass diffusion model
+
+The `bass_diffusion` module implements the classic Bass (1969) new-product
+uptake model, widely used in pharma launch analytics. Supply the coefficient
+of innovation `p`, coefficient of imitation `q`, and the market potential
+`m`, then project cumulative and new adopters period-by-period.
+
+```python
+from src.bass_diffusion import BassParameters, forecast, peak_period
+
+params = BassParameters(p=0.01, q=0.4, m=12000, product_name="Cardivex 10mg")
+fc = forecast(params, horizon=24)
+
+print(fc.to_dataframe().head())
+print(f"Continuous-time peak month: {peak_period(params):.2f}")
+```
+
+**Output:**
+
+```
+   period  cumulative_adopters  new_adopters  adoption_fraction
+0       1           127.624834    127.624834           0.010635
+1       2           314.103920    186.479086           0.026175
+2       3           585.120081    271.016161           0.048760
+3       4           976.003793    390.883712           0.081334
+4       5          1534.126181    558.122388           0.127844
+Continuous-time peak month: 9.00
+```
+
+A grid-search fitter (`fit_parameters`) recovers `p` and `q` from observed
+launch data without requiring SciPy, and `forecast_from_launch_row` lets
+you batch-forecast a portfolio from a tabular launch plan
+(see `sample_data/bass_diffusion_samples.csv`).
+
 ## Running the Test Suite
 
 ```bash
 pytest tests/ -v
 ```
 
-88 tests across two modules cover every pure function and its edge cases (empty DataFrame, zero / negative / NaN target, missing columns, ties, and more):
+131 tests across three modules cover every pure function and its edge cases (empty DataFrame, zero / negative / NaN target, missing columns, ties, and more):
 
-- `tests/test_dashboard.py` - 49 tests for `src.main`
-- `tests/test_metrics.py`   - 39 tests for `src.metrics`
+- `tests/test_dashboard.py`       - 49 tests for `src.main`
+- `tests/test_metrics.py`         - 39 tests for `src.metrics`
+- `tests/test_bass_diffusion.py`  - 43 tests for `src.bass_diffusion`
 
 ## Project Structure
 
@@ -125,13 +161,18 @@ pharma-sales-dashboard/
 |   | __init__.py
 |   | main.py              # Core dashboard class + validation / preprocess
 |   | metrics.py           # Attainment, YoY, ranking, cohort helpers
+|   | bass_diffusion.py    # Bass (1969) new-product uptake forecaster
 |   | streamlit_app.py     # Streamlit UI (4 tabs)
 |   | data_generator.py    # Synthetic data generator
 | tests/
-|   | test_dashboard.py    # 49-test suite
-|   | test_metrics.py      # 39-test suite
+|   | test_dashboard.py        # 49-test suite
+|   | test_metrics.py          # 39-test suite
+|   | test_bass_diffusion.py   # 43-test suite
 | demo/
 |   | sample_data.csv      # 20-row realistic sample (2024 + 2025)
+| sample_data/
+|   | sample_data.csv              # Compact sample for quick experiments
+|   | bass_diffusion_samples.csv   # Launch-plan rows with p, q, m, therapeutic area
 | examples/
 |   | basic_usage.py
 | data/                    # Working dir (gitignored)

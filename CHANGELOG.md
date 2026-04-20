@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0] - 2026-04-21
+### Added
+- `src/bass_diffusion.py` implementing the Bass (1969) new-product diffusion
+  model for pharma launch uptake forecasting: `BassParameters`,
+  `BassForecast`, `adoption_fraction`, `cumulative_adopters`, `new_adopters`,
+  `peak_period`, `peak_new_adopters`, `forecast`, `fit_parameters` (grid-search
+  estimator), and `forecast_from_launch_row` for tabular batch forecasting.
+- `tests/test_bass_diffusion.py` with 43 pytest cases covering parameter
+  validation, closed-form identities, monotonicity, peak timing,
+  immutability, and DataFrame helpers.
+- `sample_data/bass_diffusion_samples.csv` with 15 realistic launch-plan
+  rows (product, therapeutic area, territory, specialty, p, q, m, horizon).
+- README section with a runnable Bass diffusion example and updated
+  project structure.
+
 ## [0.3.0] - 2026-04-19
 ### Added
 - `src/metrics.py` module with revenue attainment, YoY growth, rep ranking,
